@@ -2,6 +2,7 @@
 #include<conio.h>
 #include<thread>
 using namespace std;
+using namespace std::chrono_literals;
 
 #define MIN_TANK_VOLUME 20
 #define MAX_TANK_VOLUME 120
@@ -175,6 +176,20 @@ public:
 				if (driver_inside)get_out();
 				else get_in();
 				break;
+			case 'F':case'f':
+			{
+				if (driver_inside)
+				{
+					cout << "ƒл€ начала нужно выйти из машины" << endl;
+					break;
+				}
+				double fuel;
+				cout << "¬ведите объем топлива: "; cin >> fuel;
+				tank.fill(fuel);
+				break;
+			}
+			case Escape:
+				get_out();
 			}
 		} while (key != Escape);
 	}
@@ -186,6 +201,7 @@ public:
 			system("CLS");
 			cout << "Fuel level:\t" << tank.get_fuel_level() << " liters\n";
 			cout << "Engine is " << (engine.started() ? "started" : "stopped") << endl;
+			std::this_thread::sleep_for(1s);
 		}
 	}
 };
