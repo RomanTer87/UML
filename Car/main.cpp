@@ -29,6 +29,12 @@ public:
 		if (fuel_level + fuel < VOLUME)fuel_level += fuel;
 		else fuel_level = VOLUME;
 	}
+	double give_fuel(double amount)
+	{
+		fuel_level -= amount;
+		if (fuel_level < 0)fuel_level = 0;
+		return fuel_level;
+	}
 
 	Tank(int volume)
 		:VOLUME
@@ -126,6 +132,7 @@ class Car
 	struct Threads
 	{
 		std::thread panel_thread;
+		std::thread engine_idle_thread;
 	}threads;
 public:
 	int get_speed()const
@@ -164,11 +171,27 @@ public:
 		system("CLS");
 		cout << "Outside" << endl;
 	}
+	void start()
+	{
+		if (driver_inside && tank.get_fuel_level())
+		{
+			engine.start();
+			threads.engine_idle_thread = std::thread(&Car::engine_idle, this);
+		}
+	}
+	void stop()
+	{
+		engine.stop();
+		if (threads.engine_idle_thread.joinable())threads.engine_idle_thread.join();
+	}
+
 	void control()
 	{
-		char key;
+		char key = 0;
 		do
 		{
+			key = 0;
+			if(_kbhit())	//функция _kbhit() во
 			key = _getch();
 			switch (key)
 			{
@@ -188,12 +211,21 @@ public:
 				tank.fill(fuel);
 				break;
 			}
+			case 'I':case'i':	//Ignition - зажигание
+				if (engine.started())stop();
+				else start();
+				break;
 			case Escape:
 				get_out();
 			}
+			if (tank.get_fuel_level() == 0)stop();
 		} while (key != Escape);
 	}
-
+	void engine_idle()
+	{
+		while (engine.started() && tank.give_fuel(engine.get_consumptrion_per_second()))
+			std::this_thread::sleep_for(1s);
+	}
 	void panel()const
 	{
 		while (driver_inside)
